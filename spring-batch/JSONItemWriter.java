@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * <p> Dado que a la fecha (2016-03-17) spring-batch no implementa
@@ -43,8 +44,8 @@ import com.google.gson.Gson;
 public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
 		implements ResourceAwareItemWriterItemStream<T>, InitializingBean {
 
-	private Gson gson = new Gson();
 	private static final boolean DEFAULT_TRANSACTIONAL = true;
+	private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	protected static final Log logger = LogFactory.getLog(JSONItemWriter.class);
 	private Resource resource;
 	private OutputState state = null;
@@ -54,15 +55,24 @@ public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
 	private String encoding = OutputState.DEFAULT_CHARSET;
 	private boolean transactional = DEFAULT_TRANSACTIONAL;
 	private boolean append = false;
+	private String dateFormat = DEFAULT_DATE_FORMAT;
+        private Gson gson;
 
 	public JSONItemWriter() {
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		
+		gson = new GsonBuilder().setDateFormat(dateFormat).create();
+		
 		if (append) {
 			shouldDeleteIfExists = false;
 		}
+	}
+
+        public void setDateFormat(String dateFormat) {			
+                this.dateFormat = dateFormat;			
 	}
 
 	public void setForceSync(boolean forceSync) {
