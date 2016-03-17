@@ -1,9 +1,4 @@
-# implementations
-Adaptaciones, modificaciones y/o utilidades especificas
-
-Este repositorio unicamente proveé de fuentes de diversos lenguajes, que han sido modificados para proveer una necesidad particular.
-
-**SpringBatch: [JSONItemWriter](https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONItemWriter.java)**
+#SpringBatch: [JSONItemWriter](https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONItemWriter.java)**
 
 Esta clase es una adaptación de la clase [FlatFileItemWriter<T>](https://docs.spring.io/spring-batch/apidocs/org/springframework/batch/item/file/FlatFileItemWriter.html) de [spring-batch](http://projects.spring.io/spring-batch/).
 La misma fué modificada para solventar la necesidad de escribir objetos JSON a un archivo.
