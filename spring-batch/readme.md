@@ -37,6 +37,12 @@ Define el `writer` así
 
 Para este ejemplo (por la necesidad específica) solo se definieron los atributos `resource` (porque es el archivo de salida) y `shouldDeleteIfExists` (porque así lo requiere la necesidad)
 
+Los formatos de fecha son manejados por el atributo `dateFormat`, se puede definir asi:
+
+    <property name="dateFormat" value="yyyy-MM-dd"/>
+    
+El formato por defecto es `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`, si no se especifica formato a nivel de la configuración; se utilizará el formato por defecto.
+
 Otros atributos (`<property>`) que se mantienen, pero que no se ha probado su comportamiento son los siguientes:
 
     private boolean forceSync = false;
