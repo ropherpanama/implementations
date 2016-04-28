@@ -1,0 +1,69 @@
+I have a class (for example) like this 
+
+    public class WriteIt {
+            private PrintStream printStr;
+            private String message;
+            private static WriteIt logger;
+            private static String className;
+        
+            public static WriteIt getInstance(Class<?> clazz) {
+                if (logger == null)
+                    logger = new WriteIt();
+        
+                className = clazz.getCanonicalName();
+                return logger;
+            }
+        	
+        	public void write(String message) {
+                if (printStr == null)
+                    printStr = createLogFile();// this method creates the file to write
+        
+                printStr.println("Time: " + SystemClock.currentThreadTimeMillis() + " from class " className + " -> " + message);
+                printStr.flush();
+            }
+        }
+
+The above class has a static method `write` that writes the time, the `className` and the text received, then multiple class can access this class.
+
+For example, a `Client` class gets an instance of `WriteIt` class and call the `write` method
+
+    public class Client {
+    	private WriteIt w = WriteIt.getInstance(Client.class);
+    	
+    	public void justAMethod() {
+    		w.write("Client has called this method");
+    	}
+    }
+
+Another `Vendor` class gets an instance of `WriteIt` class and call the `write` method    
+
+    public class Vendor {
+    	private WriteIt w = WriteIt.getInstance(Vendor.class);
+    	
+    	public void justAMethod() {
+    		w.write("Vendor has called this method");
+    	}
+    }
+    
+And in the main process, we use the `Client` and the `Vendor` class
+
+    public class Sale {
+    	public static void main(String[] args) {
+    		Client c = new Client();
+    		Vendor v = new Vendor();
+    		c.justAMethod();
+    		v.justAMethod();
+    	}
+    }
+	
+WriteIt.className is a static variable, c and v objects have the copy, because it's a static variable, then the output will be 
+
+    //Time: 123456 from class com.package.Vendor -> Client has called this method
+    //Time: 123456 from class com.package.Vendor -> Vendor has called this method
+			
+I want to keep the correct className value
+
+    //Time: 123456 from class com.package.Client -> Client has called this method
+    //Time: 123456 from class com.package.Vendor -> Vendor has called this method
+			
+Something like `log4j` prints the correct class name in the log, still when many classes uses the `Logger.getInstance(Class clazz)` method.
