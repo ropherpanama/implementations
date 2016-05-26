@@ -8,10 +8,14 @@ import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.WriteFailedException;
@@ -31,6 +35,10 @@ import com.google.gson.GsonBuilder;
  * un writer para tipos JSON específicamente, se ha optado por crear
  * esta implementacion de la clase FlatFileItemWriter para que sea capaz
  * de escribir archivos con data en formato JSON.
+ * 
+ * Esta implementacion omite el commitInterval y escribe el contenido del
+ * archivo al finalizar el step
+ * 
  * @author rospena 
  * 
  * <p>Esta clase ha sido una adaptación a una necesidad. Todos los créditos originales son de las siguientes personas: 
@@ -42,7 +50,7 @@ import com.google.gson.GsonBuilder;
  * @author Michael Minella
  */
 public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
-		implements ResourceAwareItemWriterItemStream<T>, InitializingBean {
+		implements ResourceAwareItemWriterItemStream<T>, InitializingBean, StepExecutionListener {
 
 	private static final boolean DEFAULT_TRANSACTIONAL = true;
 	private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -57,14 +65,15 @@ public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
 	private boolean append = false;
 	private String dateFormat = DEFAULT_DATE_FORMAT;
         private Gson gson;
+        private List<T> objects;
 
 	public JSONItemWriter() {
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		
-		gson = new GsonBuilder().setDateFormat(dateFormat).create();
+		objects = new ArrayList<T>();
+		gson = new GsonBuilder().setDateFormat(dateFormat).disableHtmlEscaping().create();
 		
 		if (append) {
 			shouldDeleteIfExists = false;
@@ -107,29 +116,7 @@ public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
 
 	@Override
 	public void write(List<? extends T> items) throws Exception {
-
-		if (!getOutputState().isInitialized()) {
-			throw new WriterNotOpenException("Writer must be open before it can be written to");
-		}
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Writing to flat file with " + items.size() + " items.");
-		}
-
-		OutputState state = getOutputState();
-		StringBuilder lines = new StringBuilder();
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Writing to flat file : " + gson.toJson(items));
-		}
-
-		lines.append(gson.toJson(items));
-
-		try {
-			state.write(lines.toString());
-		} catch (IOException e) {
-			throw new WriteFailedException("Could not write data. The file may be corrupt.", e);
-		}
+		objects.addAll(items);
 	}
 
 	@Override
@@ -332,5 +319,38 @@ public class JSONItemWriter<T> extends AbstractItemStreamItemWriter<T>
 				throw new ItemStreamException("Current file size is smaller than size at last commit");
 			}
 		}
+	}
+
+	@Override
+	public ExitStatus afterStep(StepExecution arg0) {
+		if (!getOutputState().isInitialized()) {
+			throw new WriterNotOpenException("Writer must be open before it can be written to");
+		}
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("Writing to flat file with " + objects.size() + " items.");
+		}
+
+		OutputState state = getOutputState();
+		StringBuilder lines = new StringBuilder();
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("Writing to flat file : " + gson.toJson(objects));
+		}
+		
+//		lines.append(gson.toJson(items).replaceAll("\\\\u003c", "<").replaceAll("\\\\u003e", ">"));
+		lines.append(gson.toJson(objects));//solved with Gson.disableHtmlScape
+
+		try {
+			state.write(lines.toString());
+		} catch (IOException e) {
+			throw new WriteFailedException("Could not write data. The file may be corrupt.", e);
+		}
+		return ExitStatus.COMPLETED;
+	}
+
+	@Override
+	public void beforeStep(StepExecution arg0) {
+		//nothing to do before this step
 	}
 }
