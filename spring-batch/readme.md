@@ -20,13 +20,13 @@ Si la lista de items recibida por el writer no contine objeto alguno, el archivo
 Se configura un `batch:flow`, asigna a el atributo `writer` la referencia al custom writer (`itemWriterThisTask`)
 
     <batch:flow>
-				<batch:step id="ThisTask">
-					<batch:tasklet>
-						<batch:chunk reader="cursorReaderThisTask" writer="itemWriterThisTask"
-							commit-interval="1000" />
-					</batch:tasklet>
-				</batch:step>
-			</batch:flow>
+	<batch:step id="ThisTask">
+		<batch:tasklet>
+			<batch:chunk reader="cursorReaderThisTask" writer="itemWriterThisTask"
+			commit-interval="1000" />
+		</batch:tasklet>
+	</batch:step>
+    </batch:flow>
 
 Define el `writer` así
 
@@ -54,3 +54,37 @@ Otros atributos (`<property>`) que se mantienen, pero que no se ha probado su co
 	
 El `package` debe ser el paquete en donde ubiques la clase, en este caso `com.company.project.module.process.writer`
 
+#Otra implementación
+[JSONLineAggregator] (https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONLineAggregator.java) y [JSONFlatFileFooterCallback] (https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONFlatFileFooterCallback.java)
+
+Después de retomar el tema realicé otra implementación para el mismo objetivo, ya que no me convencía del todo escribir todo el archivo de golpe, sin hacer uso del `commitInterval`.
+
+Esta implementación mantiene el uso del [FlatFileItemWriter] (http://docs.spring.io/spring-batch/trunk/apidocs/org/springframework/batch/item/file/FlatFileItemWriter.html) de Spring Batch en conjunto con [LineAggregator] (http://docs.spring.io/spring-batch/apidocs/org/springframework/batch/item/file/transform/LineAggregator.html) y [FlatFileFooterCallback] (http://docs.spring.io/spring-batch/apidocs/org/springframework/batch/item/file/FlatFileFooterCallback.html)
+
+Primero se debe definir el `bean` que hace referencia al objeto `FlatFileFooterCallback`
+
+    <bean id="jsonFlatFileFooterCallback" class="com.batch.isgl.descargasmf.asignar.writer.JSONFlatFileFooterCallback" /> 
+    
+Luego el `ItemWriter` debe ser definido de la siguiente manera
+
+    <bean id="itemWriterThisTask" scope="step" class="org.springframework.batch.item.file.FlatFileItemWriter">
+	<property name="resource" value="#{jobParameters['fileThisTask']}" />
+	<property name="shouldDeleteIfExists" value="true" />
+	<property name="lineAggregator">
+            <bean class="com.company.project.module.process.writer.JSONLineAggregator"/>
+        </property>
+        <property name="footerCallback" ref="jsonFlatFileFooterCallback" />
+    </bean>
+
+También se puede definir un formato de fecha deseado a la salida del proceso, el valor por default es `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`
+
+    <bean id="itemWriterThisTask" scope="step" class="org.springframework.batch.item.file.FlatFileItemWriter">
+        <property name="resource" value="#{jobParameters['fileThisTask']}" />
+	<property name="shouldDeleteIfExists" value="true" />
+	<property name="lineAggregator">
+            <bean class="com.company.project.module.process.writer.JSONLineAggregator">
+                <property name="dateFormat" value="yyyy-MM-dd" />
+            </bean>
+        </property>
+        <property name="footerCallback" ref="jsonFlatFileFooterCallback" />
+    </bean>
