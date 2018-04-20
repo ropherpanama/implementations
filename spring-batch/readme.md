@@ -1,4 +1,4 @@
-##SpringBatch: [JSONItemWriter](https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONItemWriter.java)
+## SpringBatch: [JSONItemWriter](https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONItemWriter.java)
 
 Esta clase es una adaptación de la clase [FlatFileItemWriter<T>](https://docs.spring.io/spring-batch/apidocs/org/springframework/batch/item/file/FlatFileItemWriter.html) de [spring-batch](http://projects.spring.io/spring-batch/).
 La misma fué modificada para solventar la necesidad de escribir objetos JSON a un archivo.
@@ -11,9 +11,9 @@ Los datos (por la particular necesidad) son escritos en una sola línea y siempr
 
 Si la lista de items recibida por el writer no contine objeto alguno, el archivo se crea sin contenido.
 
-#Uso
+# Uso
 
-###XML Config
+### XML Config
 
 **Step config**
 
@@ -54,7 +54,7 @@ Otros atributos (`<property>`) que se mantienen, pero que no se ha probado su co
 	
 El `package` debe ser el paquete en donde ubiques la clase, en este caso `com.company.project.module.process.writer`
 
-#Otra implementación
+# Otra implementación
 [JSONLineAggregator] (https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONLineAggregator.java) y [JSONFlatFileFooterCallback] (https://github.com/ropherpanama/implementations/blob/master/spring-batch/JSONFlatFileFooterCallback.java)
 
 Después de retomar el tema realicé otra implementación para el mismo objetivo, ya que no me convencía del todo escribir todo el archivo de golpe, sin hacer uso del `commitInterval`.
